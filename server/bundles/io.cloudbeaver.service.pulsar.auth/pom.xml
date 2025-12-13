@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <parent>
+        <groupId>io.cloudbeaver</groupId>
+        <artifactId>bundles</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    
+    <artifactId>io.cloudbeaver.service.pulsar.auth</artifactId>
+    <packaging>bundle</packaging>
+    <name>CloudBeaver Pulsar SSO Authentication Service</name>
+    <description>Pulsar SSO authentication integration for CloudBeaver</description>
+    
+    <dependencies>
+        <!-- CloudBeaver dependencies -->
+        <dependency>
+            <groupId>io.cloudbeaver</groupId>
+            <artifactId>io.cloudbeaver.model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.cloudbeaver</groupId>
+            <artifactId>io.cloudbeaver.server</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.cloudbeaver</groupId>
+            <artifactId>io.cloudbeaver.service.auth</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.cloudbeaver</groupId>
+            <artifactId>io.cloudbeaver.service.security</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        
+        <!-- JWT Library -->
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+            <version>4.4.0</version>
+        </dependency>
+        
+        <!-- Servlet API -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        
+        <!-- DBeaver Core -->
+        <dependency>
+            <groupId>org.jkiss.dbeaver</groupId>
+            <artifactId>org.jkiss.dbeaver.model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jkiss.dbeaver</groupId>
+            <artifactId>org.jkiss.utils</artifactId>
+        </dependency>
+    </dependencies>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <configuration>
+                    <instructions>
+                        <Bundle-Name>CloudBeaver Pulsar SSO Auth</Bundle-Name>
+                        <Bundle-SymbolicName>io.cloudbeaver.service.pulsar.auth;singleton:=true</Bundle-SymbolicName>
+                        <Bundle-Vendor>DBeaver Corp</Bundle-Vendor>
+                        <Bundle-RequiredExecutionEnvironment>JavaSE-11</Bundle-RequiredExecutionEnvironment>
+                        <Export-Package>io.cloudbeaver.service.pulsar.auth</Export-Package>
+                        <Import-Package>*</Import-Package>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
