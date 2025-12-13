@@ -21,6 +21,7 @@ import org.jkiss.utils.CommonUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Collections;
 
 /**
  * Pulsar SSO Authentication Handler

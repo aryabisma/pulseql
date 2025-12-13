@@ -44,15 +44,17 @@ public class PulsarSSOServlet extends DBWServiceBindingServlet {
             String signingSecret = CBApplication.getInstance().getAppConfiguration()
                 .getConfigurationValue("pulsar.sso.signingSecret");
             
-            if (CommonUtils.isEmpty(signingSecret)) {
-                log.warn("Pulsar SSO signing secret not configured");
-                signingSecret = "default-secret-change-in-production";
+            if (CommonUtils.isEmpty(signingSecret) || "default-secret-CHANGE-IN-PRODUCTION".equals(signingSecret)) {
+                String error = "CRITICAL: Pulsar SSO signing secret not configured! " +
+                    "Set PULSAR_SSO_SECRET environment variable or pulsar.sso.signingSecret in configuration.";
+                log.error(error);
+                throw new ServletException(error);
             }
             
             tokenValidator = new PulsarSSOTokenValidator(signingSecret);
             authHandler = new PulsarSSOAuthHandler(tokenValidator);
             
-            log.info("Pulsar SSO service initialized");
+            log.info("Pulsar SSO service initialized successfully");
             
         } catch (Exception e) {
             log.error("Failed to initialize Pulsar SSO service", e);
@@ -149,7 +151,8 @@ public class PulsarSSOServlet extends DBWServiceBindingServlet {
     }
     
     /**
-     * Extract token from request body
+     * Extract token from JSON request body using simple but safe parsing
+     * For production, consider using Jackson or Gson
      */
     private String extractTokenFromRequest(HttpServletRequest request) throws IOException {
         try {
@@ -160,19 +163,57 @@ public class PulsarSSOServlet extends DBWServiceBindingServlet {
                 sb.append(line);
             }
             
-            String body = sb.toString();
+            String body = sb.toString().trim();
             
-            // Simple JSON parsing (for token field)
-            if (body.contains("\"token\"")) {
-                int start = body.indexOf("\"token\"") + 8;
-                start = body.indexOf("\"", start) + 1;
-                int end = body.indexOf("\"", start);
-                if (start > 0 && end > start) {
-                    return body.substring(start, end);
-                }
+            // Validate basic JSON structure
+            if (!body.startsWith("{") || !body.endsWith("}")) {
+                return null;
             }
             
-            return null;
+            // Simple JSON parsing for "token" field with proper escaping
+            // This approach avoids most injection risks by only extracting quoted strings
+            int tokenIndex = body.indexOf("\"token\"");
+            if (tokenIndex == -1) {
+                return null;
+            }
+            
+            // Find the value after "token":
+            int colonIndex = body.indexOf(":", tokenIndex);
+            if (colonIndex == -1) {
+                return null;
+            }
+            
+            // Skip whitespace and find opening quote
+            int startQuote = body.indexOf("\"", colonIndex);
+            if (startQuote == -1) {
+                return null;
+            }
+            
+            // Find closing quote, handling escaped quotes
+            int endQuote = startQuote + 1;
+            while (endQuote < body.length()) {
+                char c = body.charAt(endQuote);
+                if (c == '"' && body.charAt(endQuote - 1) != '\\') {
+                    break;
+                }
+                endQuote++;
+            }
+            
+            if (endQuote >= body.length()) {
+                return null;
+            }
+            
+            // Extract token (between quotes)
+            String token = body.substring(startQuote + 1, endQuote);
+            
+            // Validate token format (JWT has 3 parts separated by dots)
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                log.warn("Invalid token format - not a JWT");
+                return null;
+            }
+            
+            return token;
             
         } catch (Exception e) {
             log.warn("Failed to extract token from request", e);

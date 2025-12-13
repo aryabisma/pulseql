@@ -21,7 +21,7 @@ import org.jkiss.dbeaver.Log;
 import org.jkiss.utils.CommonUtils;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 
 /**
  * Pulsar SSO Token Validator
@@ -43,6 +43,7 @@ public class PulsarSSOTokenValidator {
     private final String signingSecret;
     private final Algorithm algorithm;
     private final JWTVerifier verifier;
+    private final ScheduledExecutorService cleanupExecutor;
     
     public PulsarSSOTokenValidator(@NotNull String signingSecret) {
         this.signingSecret = signingSecret;
@@ -52,7 +53,14 @@ public class PulsarSSOTokenValidator {
             .withAudience(EXPECTED_AUDIENCE)
             .build();
             
-        // Start cleanup thread for expired blacklist entries
+        // Start cleanup with ScheduledExecutorService for proper lifecycle management
+        this.cleanupExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread thread = new Thread(r);
+            thread.setDaemon(true);
+            thread.setName("Pulsar-SSO-Blacklist-Cleanup");
+            return thread;
+        });
+        
         startBlacklistCleanup();
     }
     
@@ -145,30 +153,36 @@ public class PulsarSSOTokenValidator {
     }
     
     /**
-     * Start background thread to cleanup expired blacklist entries
+     * Start background cleanup using ScheduledExecutorService
      */
     private void startBlacklistCleanup() {
-        Thread cleanupThread = new Thread(() -> {
-            while (true) {
-                try {
-                    Thread.sleep(5 * 60 * 1000); // Run every 5 minutes
-                    
-                    long now = System.currentTimeMillis();
-                    TOKEN_BLACKLIST.entrySet().removeIf(entry -> entry.getValue() < now);
-                    
-                    log.debug("Blacklist cleanup completed. Size: " + TOKEN_BLACKLIST.size());
-                    
-                } catch (InterruptedException e) {
-                    log.debug("Blacklist cleanup thread interrupted");
-                    break;
-                } catch (Exception e) {
-                    log.error("Error in blacklist cleanup", e);
-                }
+        cleanupExecutor.scheduleAtFixedRate(() -> {
+            try {
+                long now = System.currentTimeMillis();
+                TOKEN_BLACKLIST.entrySet().removeIf(entry -> entry.getValue() < now);
+                
+                log.debug("Blacklist cleanup completed. Size: " + TOKEN_BLACKLIST.size());
+                
+            } catch (Exception e) {
+                log.error("Error in blacklist cleanup", e);
             }
-        });
-        cleanupThread.setDaemon(true);
-        cleanupThread.setName("Pulsar-SSO-Blacklist-Cleanup");
-        cleanupThread.start();
+        }, 5, 5, TimeUnit.MINUTES); // Initial delay: 5min, Interval: 5min
+    }
+    
+    /**
+     * Shutdown cleanup executor (call during application shutdown)
+     */
+    public void shutdown() {
+        cleanupExecutor.shutdown();
+        try {
+            if (!cleanupExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+                cleanupExecutor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            cleanupExecutor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+        log.info("Pulsar SSO Token Validator shut down");
     }
     
     /**
