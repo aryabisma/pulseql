@@ -144,7 +144,9 @@ export class PulsarSSOService {
 
       // Decode payload (client-side only - server must verify signature)
       const payloadBase64 = parts[1];
-      const payloadJson = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+      // Add padding if needed for base64URL decoding
+      const paddedPayload = payloadBase64 + '==='.slice((payloadBase64.length + 3) % 4);
+      const payloadJson = atob(paddedPayload.replace(/-/g, '+').replace(/_/g, '/'));
       const payload: JWTPayload = JSON.parse(payloadJson);
 
       // Validate required fields
@@ -194,7 +196,9 @@ export class PulsarSSOService {
       }
 
       // Check token age (prevent old tokens)
-      if (payload.iat && (now - payload.iat) > this.MAX_TOKEN_AGE_MS / 1000) {
+      const tokenAgeSeconds = now - payload.iat;
+      const maxTokenAgeSeconds = this.MAX_TOKEN_AGE_MS / 1000;
+      if (payload.iat && tokenAgeSeconds > maxTokenAgeSeconds) {
         return {
           valid: false,
           error: 'Token too old',
@@ -262,16 +266,22 @@ export class PulsarSSOService {
 
   /**
    * Store token securely
-   * In production, should use encryption or secure cookie
+   * WARNING: sessionStorage is not secure - tokens exposed to XSS
+   * PRODUCTION: Use HttpOnly secure cookies or server-side session only
    */
   private storeTokenSecurely(token: string): void {
-    // WARNING: sessionStorage is not encrypted
-    // In production, consider:
-    // 1. Storing only on server-side session
-    // 2. Using HttpOnly secure cookies
-    // 3. Encrypting before storage
+    // TODO: For production, implement one of:
+    // 1. Server-side session storage (recommended)
+    // 2. HttpOnly secure cookie with SameSite=Strict
+    // 3. Remove client-side storage entirely
+    
     try {
+      // Current implementation - acceptable for development only
       sessionStorage.setItem('pulsar_sso_token', token);
+      console.warn(
+        '[PulsarSSOService] Token stored in sessionStorage. ' +
+          'This is not secure for production. Use HttpOnly cookies.'
+      );
     } catch (error) {
       console.warn('[PulsarSSOService] Failed to store token:', error);
     }

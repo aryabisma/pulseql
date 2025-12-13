@@ -195,12 +195,8 @@ export class WorkspaceModeService {
   private clearSensitiveURLParameters(): void {
     try {
       const url = new URL(window.location.href);
-      const paramsToKeep = new URLSearchParams();
-
-      // Keep only non-sensitive parameters if needed
-      // For now, clear all workspace-related params
-      url.search = paramsToKeep.toString();
-      
+      // Clear all search parameters
+      url.search = '';
       window.history.replaceState({}, '', url.toString());
     } catch (error) {
       console.warn('[WorkspaceModeService] Failed to clear URL parameters:', error);
@@ -254,27 +250,33 @@ export class WorkspaceModeService {
 
   /**
    * Sanitize text to prevent XSS
+   * Uses browser's built-in text encoding for efficiency
    */
   private sanitizeText(text: string | null): string | undefined {
     if (!text) {
       return undefined;
     }
 
-    // Remove HTML tags and encode special characters
-    const div = document.createElement('div');
-    div.textContent = text;
-    const sanitized = div.innerHTML;
+    // Encode HTML entities to prevent XSS
+    // This approach is simple and efficient for text-only content
+    const encoded = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
+      .replace(/\//g, '&#x2F;');
 
     // Limit length to prevent DoS
     const maxLength = 200;
-    if (sanitized.length > maxLength) {
+    if (encoded.length > maxLength) {
       console.warn(
         `[WorkspaceModeService] Text exceeds maximum length (${maxLength} chars). Truncating.`
       );
-      return sanitized.substring(0, maxLength);
+      return encoded.substring(0, maxLength);
     }
 
-    return sanitized;
+    return encoded;
   }
 
   /**

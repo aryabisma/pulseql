@@ -98,7 +98,8 @@ export class PulsarIntegrationBootstrap extends Bootstrap {
   }
 
   private handleSSOFailure(): void {
-    // Display error message to user
+    // Get error message (already sanitized in PulsarSSOService)
+    // Error messages are controlled strings, not user input
     const errorMessage = this.ssoService.authError || 'SSO authentication failed';
 
     // Create error notification element
@@ -115,6 +116,7 @@ export class PulsarIntegrationBootstrap extends Bootstrap {
       z-index: 10000;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     `;
+    // Use textContent to prevent any XSS, even though errorMessage is controlled
     notification.textContent = `Authentication Error: ${errorMessage}`;
 
     document.body.appendChild(notification);
