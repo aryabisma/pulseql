@@ -9,12 +9,16 @@
 import { Bootstrap, ModuleRegistry } from '@cloudbeaver/core-di';
 import { PulsarIntegrationBootstrap } from './PulsarIntegrationBootstrap.js';
 import { WorkspaceModeService } from './WorkspaceModeService.js';
+import { PulsarSSOService } from './PulsarSSOService.js';
+import { PulsarPermissionService } from './PulsarPermissionService.js';
 
 /**
  * Pulsar Integration Plugin Module
  * 
  * Provides workspace mode functionality for seamless Pulsar integration:
  * - URL parameter-based mode switching
+ * - SSO authentication with JWT tokens
+ * - Permission-based access control (RBAC)
  * - Custom branding and theming
  * - Read-only connection mode
  * - Embedded workspace support
@@ -23,8 +27,10 @@ export default ModuleRegistry.add({
   name: '@cloudbeaver/plugin-pulsar-integration',
 
   configure: serviceCollection => {
-    // Register services
+    // Register core services
     serviceCollection.addSingleton(WorkspaceModeService);
+    serviceCollection.addSingleton(PulsarSSOService);
+    serviceCollection.addSingleton(PulsarPermissionService);
     
     // Register bootstrap to initialize on app start
     serviceCollection.addSingleton(Bootstrap, PulsarIntegrationBootstrap);

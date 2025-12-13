@@ -109,12 +109,29 @@ export class WorkspaceModeService {
       );
     }
 
+    // Validate mode parameter
+    const modeParam = params.get('mode');
+    const validModes: WorkspaceMode[] = ['standalone', 'pulsar', 'embedded'];
+    const mode = modeParam && validModes.includes(modeParam as WorkspaceMode) 
+      ? (modeParam as WorkspaceMode) 
+      : 'standalone';
+
+    if (modeParam && !validModes.includes(modeParam as WorkspaceMode)) {
+      console.warn(
+        `[WorkspaceModeService] Invalid mode '${modeParam}'. Defaulting to 'standalone'. ` +
+          `Valid modes: ${validModes.join(', ')}`
+      );
+    }
+
+    // Sanitize workspace ID to prevent injection
+    const workspaceId = this.sanitizeWorkspaceId(params.get('workspace_id'));
+
     this.config = {
-      mode: (params.get('mode') as WorkspaceMode) || 'standalone',
-      theme: params.get('theme') || undefined,
+      mode,
+      theme: this.sanitizeThemeName(params.get('theme')),
       hideNavigation: validHideNavItems,
       readonlyConnections: params.get('readonly_connections') === 'true',
-      workspaceId: params.get('workspace_id') || undefined,
+      workspaceId,
       autoConnect: params.get('auto_connect') === 'true',
       hideHeader: params.get('hide_header') === 'true',
       hideFooter: params.get('hide_footer') === 'true',
@@ -125,37 +142,160 @@ export class WorkspaceModeService {
     if (this.isPulsarMode || this.isEmbeddedMode) {
       sessionStorage.setItem('workspace_mode_config', JSON.stringify(this.config));
     }
+
+    // Clear URL parameters for security after reading
+    this.clearSensitiveURLParameters();
+  }
+
+  /**
+   * Sanitize workspace ID to prevent XSS
+   */
+  private sanitizeWorkspaceId(workspaceId: string | null): string | undefined {
+    if (!workspaceId) {
+      return undefined;
+    }
+
+    // Allow only alphanumeric, dash, and underscore
+    const sanitized = workspaceId.replace(/[^a-zA-Z0-9\-_]/g, '');
+    
+    if (sanitized !== workspaceId) {
+      console.warn(
+        `[WorkspaceModeService] Workspace ID contained invalid characters and was sanitized: ` +
+          `'${workspaceId}' -> '${sanitized}'`
+      );
+    }
+
+    return sanitized || undefined;
+  }
+
+  /**
+   * Sanitize theme name to prevent XSS
+   */
+  private sanitizeThemeName(theme: string | null): string | undefined {
+    if (!theme) {
+      return undefined;
+    }
+
+    // Allow only alphanumeric and dash
+    const sanitized = theme.replace(/[^a-zA-Z0-9\-]/g, '');
+    
+    if (sanitized !== theme) {
+      console.warn(
+        `[WorkspaceModeService] Theme name contained invalid characters and was sanitized: ` +
+          `'${theme}' -> '${sanitized}'`
+      );
+    }
+
+    return sanitized || undefined;
+  }
+
+  /**
+   * Clear sensitive URL parameters after reading
+   */
+  private clearSensitiveURLParameters(): void {
+    try {
+      const url = new URL(window.location.href);
+      const paramsToKeep = new URLSearchParams();
+
+      // Keep only non-sensitive parameters if needed
+      // For now, clear all workspace-related params
+      url.search = paramsToKeep.toString();
+      
+      window.history.replaceState({}, '', url.toString());
+    } catch (error) {
+      console.warn('[WorkspaceModeService] Failed to clear URL parameters:', error);
+    }
   }
 
   /**
    * Parse custom branding from URL parameters
-   * Validates color parameter to prevent invalid CSS
+   * Validates and sanitizes all inputs to prevent XSS
    */
   private parseCustomBranding(params: URLSearchParams): WorkspaceModeConfig['customBranding'] {
-    const logo = params.get('brand_logo');
-    const title = params.get('brand_title');
-    const color = params.get('brand_color');
-    const returnUrl = params.get('return_url');
+    const logo = this.sanitizeURL(params.get('brand_logo'));
+    const title = this.sanitizeText(params.get('brand_title'));
+    const color = this.validateColor(params.get('brand_color'));
+    const returnUrl = this.sanitizeURL(params.get('return_url'));
 
     if (!logo && !title && !color && !returnUrl) {
       return undefined;
     }
 
-    // Validate color if provided
-    let validatedColor = color;
-    if (color) {
-      // Basic hex color validation
-      const hexColorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-      if (!hexColorRegex.test(color)) {
-        console.warn(
-          `[WorkspaceModeService] Invalid color format: ${color}. ` +
-            `Expected hex format (e.g., #1976D2). Color will be ignored.`
-        );
-        validatedColor = undefined;
-      }
+    return { logo, title, color, returnUrl };
+  }
+
+  /**
+   * Validate and sanitize URL to prevent XSS
+   */
+  private sanitizeURL(url: string | null): string | undefined {
+    if (!url) {
+      return undefined;
     }
 
-    return { logo, title, color: validatedColor, returnUrl };
+    try {
+      // Parse URL to validate format
+      const parsedUrl = new URL(url);
+
+      // Allow only HTTP and HTTPS protocols
+      if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+        console.warn(
+          `[WorkspaceModeService] URL protocol not allowed: ${parsedUrl.protocol}. ` +
+            `Only http: and https: are permitted.`
+        );
+        return undefined;
+      }
+
+      return parsedUrl.toString();
+    } catch (error) {
+      console.warn(`[WorkspaceModeService] Invalid URL format: ${url}`);
+      return undefined;
+    }
+  }
+
+  /**
+   * Sanitize text to prevent XSS
+   */
+  private sanitizeText(text: string | null): string | undefined {
+    if (!text) {
+      return undefined;
+    }
+
+    // Remove HTML tags and encode special characters
+    const div = document.createElement('div');
+    div.textContent = text;
+    const sanitized = div.innerHTML;
+
+    // Limit length to prevent DoS
+    const maxLength = 200;
+    if (sanitized.length > maxLength) {
+      console.warn(
+        `[WorkspaceModeService] Text exceeds maximum length (${maxLength} chars). Truncating.`
+      );
+      return sanitized.substring(0, maxLength);
+    }
+
+    return sanitized;
+  }
+
+  /**
+   * Validate color format
+   */
+  private validateColor(color: string | null): string | undefined {
+    if (!color) {
+      return undefined;
+    }
+
+    // Basic hex color validation
+    const hexColorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+    if (!hexColorRegex.test(color)) {
+      console.warn(
+        `[WorkspaceModeService] Invalid color format: ${color}. ` +
+          `Expected hex format (e.g., #1976D2). Color will be ignored.`
+      );
+      return undefined;
+    }
+
+    return color;
   }
 
   /**
