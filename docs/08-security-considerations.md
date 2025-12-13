@@ -813,10 +813,12 @@ export class XSSProtection {
 
 ```nginx
 # nginx configuration
+# Strong CSP: Avoid 'unsafe-inline' and 'unsafe-eval'. Use nonces or hashes for inline scripts/styles.
+# If you must use 'unsafe-inline' or 'unsafe-eval' for legacy compatibility, document and understand the risk.
 add_header Content-Security-Policy "
     default-src 'self';
-    script-src 'self' 'unsafe-inline' 'unsafe-eval';
-    style-src 'self' 'unsafe-inline';
+    script-src 'self' 'nonce-<RANDOM_VALUE>';
+    style-src 'self' 'nonce-<RANDOM_VALUE>';
     img-src 'self' data: https:;
     font-src 'self' data:;
     connect-src 'self' https://pulsar.example.com;
