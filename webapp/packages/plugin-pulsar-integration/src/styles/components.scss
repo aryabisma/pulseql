@@ -167,11 +167,8 @@
 }
 
 /* Permission-based UI hiding */
-[data-permission-required] {
-  /* Elements with permission requirements */
-  &[data-permission-granted="false"] {
-    display: none !important;
-  }
+[data-permission-required][data-permission-granted="false"] {
+  display: none !important;
 }
 
 /* Responsive design for components */

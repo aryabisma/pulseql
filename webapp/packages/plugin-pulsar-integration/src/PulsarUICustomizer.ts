@@ -168,6 +168,7 @@ export class PulsarUICustomizer {
 
   /**
    * Get the return URL for "Back to Pulsar" button
+   * Checks session storage where URL is stored during initialization
    */
   getBackToPulsarUrl(): string | null {
     return sessionStorage.getItem('pulsar_return_url');

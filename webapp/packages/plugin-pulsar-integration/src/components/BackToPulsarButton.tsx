@@ -16,12 +16,12 @@ import { WorkspaceModeService } from '../WorkspaceModeService.js';
  */
 export const BackToPulsarButton = observer(function BackToPulsarButton() {
   const uiCustomizer = useService(PulsarUICustomizer);
-  const workspaceModeService = useService(WorkspaceModeService);
 
   if (!uiCustomizer.shouldShowBackToPulsarButton()) {
     return null;
   }
 
+  const workspaceModeService = useService(WorkspaceModeService);
   const branding = workspaceModeService.getCustomBranding();
 
   return (
