@@ -1,0 +1,213 @@
+/*
+ * CloudBeaver - Cloud Database Manager
+ * Copyright (C) 2020-2025 DBeaver Corp and others
+ *
+ * Licensed under the Apache License, Version 2.0.
+ * you may not use this file except in compliance with the License.
+ */
+
+/**
+ * Pulsar Workspace Styles
+ * 
+ * Styles for Pulsar-specific workspace customization
+ * Applied when mode=pulsar or mode=embedded
+ */
+
+/* Pulsar workspace container */
+.pulsar-workspace {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--theme-background);
+}
+
+/* Workspace header */
+.pulsar-workspace-header {
+  height: 60px;
+  background: var(--theme-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
+  gap: 16px;
+
+  img {
+    height: 40px;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 500;
+    margin: 0;
+    flex: 1;
+  }
+}
+
+/* Workspace main area */
+.pulsar-workspace-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Sidebar with navigation tree */
+.pulsar-workspace-sidebar {
+  width: 300px;
+  background: var(--theme-background-secondary, #f8f8f8);
+  border-right: 1px solid var(--theme-border, #e0e0e0);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+/* Main content area */
+.pulsar-workspace-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Workspace footer */
+.pulsar-workspace-footer {
+  height: 30px;
+  background: var(--theme-background-secondary, #f8f8f8);
+  border-top: 1px solid var(--theme-border, #e0e0e0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--theme-text-secondary, #757575);
+}
+
+/* Read-only connection indicator */
+.readonly-connection-icon {
+  color: var(--theme-status, #ff9900);
+  margin-left: 4px;
+  font-size: 14px;
+}
+
+.readonly-connection-badge {
+  background: var(--theme-status, #ff9900);
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+/* Back to Pulsar button */
+.back-to-pulsar-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  &:active {
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
+/* Hide elements in Pulsar mode */
+body[data-mode="pulsar"],
+body[data-mode="embedded"] {
+  /* Hide connection management buttons */
+  .connection-create-button,
+  .connection-edit-button,
+  .connection-delete-button,
+  .connection-duplicate-button {
+    display: none !important;
+  }
+
+  /* Hide admin menu items */
+  .admin-menu,
+  .server-settings-menu,
+  .user-management-menu,
+  .driver-management-menu {
+    display: none !important;
+  }
+
+  /* Hide certain navigation items */
+  [data-nav-item="admin"],
+  [data-nav-item="settings"],
+  [data-nav-item="server-config"],
+  [data-nav-item="user-management"] {
+    display: none !important;
+  }
+}
+
+/* Embedded mode specific styles */
+body[data-mode="embedded"] {
+  /* Remove margins and padding for iframe */
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+
+  /* Full height */
+  #root {
+    height: 100vh;
+  }
+}
+
+/* Dark theme overrides */
+body[data-theme="pulsar-dark"] {
+  .pulsar-workspace-sidebar {
+    background: var(--theme-background-secondary, #252525);
+    border-right-color: var(--theme-border, #3d3d3d);
+  }
+
+  .pulsar-workspace-footer {
+    background: var(--theme-background-secondary, #252525);
+    border-top-color: var(--theme-border, #3d3d3d);
+    color: var(--theme-text-secondary, #aaaaaa);
+  }
+
+  .back-to-pulsar-button {
+    border-color: rgba(255, 255, 255, 0.2);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .pulsar-workspace-sidebar {
+    width: 250px;
+  }
+
+  .pulsar-workspace-header {
+    h1 {
+      font-size: 16px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .pulsar-workspace-sidebar {
+    width: 200px;
+  }
+
+  .pulsar-workspace-header {
+    height: 50px;
+    padding: 0 8px;
+
+    img {
+      height: 30px;
+    }
+
+    h1 {
+      font-size: 14px;
+    }
+  }
+}

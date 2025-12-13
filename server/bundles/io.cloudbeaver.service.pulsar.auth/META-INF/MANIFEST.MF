@@ -1,0 +1,18 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: CloudBeaver Pulsar SSO Auth
+Bundle-SymbolicName: io.cloudbeaver.service.pulsar.auth;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: DBeaver Corp
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-ActivationPolicy: lazy
+Export-Package: io.cloudbeaver.service.pulsar.auth
+Require-Bundle: org.eclipse.core.runtime,
+ io.cloudbeaver.model,
+ io.cloudbeaver.server,
+ io.cloudbeaver.service.auth,
+ io.cloudbeaver.service.security,
+ org.jkiss.dbeaver.model,
+ org.jkiss.utils
+Bundle-ClassPath: .,
+ lib/java-jwt-4.4.0.jar

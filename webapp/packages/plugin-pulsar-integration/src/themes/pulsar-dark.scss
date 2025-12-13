@@ -1,0 +1,73 @@
+/*
+ * CloudBeaver - Cloud Database Manager
+ * Copyright (C) 2020-2025 DBeaver Corp and others
+ *
+ * Licensed under the Apache License, Version 2.0.
+ * you may not use this file except in compliance with the License.
+ */
+
+/**
+ * Pulsar Dark Theme
+ * 
+ * Dark mode variant matching Pulsar's visual style
+ * Based on the UI customization strategy in docs/04-ui-customization-strategy.md
+ */
+
+// Primary colors - matching Pulsar branding (dark mode)
+$mdc-theme-primary: #1976D2; // Keep same blue for consistency
+$mdc-theme-on-primary: #ffffff;
+$mdc-theme-secondary: #2D2D2D;
+$mdc-theme-on-secondary: #AAAAAA;
+
+$mdc-theme-sub-secondary: #252525;
+$mdc-theme-on-sub-secondary: #AAAAAA;
+
+$mdc-theme-surface: #1E1E1E; // Dark surface
+$mdc-theme-on-surface: #E0E0E0;
+$mdc-theme-background: #121212; // Very dark background
+
+$color-scheme: dark;
+$color-positive: #4CAF50; // Brighter green for dark mode
+$color-on-positive: #fff;
+$color-negative: #F44336;
+$color-status: #FF9800;
+
+$link-color: #BBDEFB; // Lighter blue for dark mode
+$link-color-focus: #1976D2;
+
+$input-color: $mdc-theme-on-surface;
+$input-color-disabled: darken($input-color, 20%);
+$input-color-placeholder: darken($input-color, 35%);
+$input-color-readonly: $input-color;
+$input-border: #3D3D3D;
+$input-border-disabled: $input-border;
+$input-border-readonly: $input-border;
+$input-background: #2D2D2D;
+$input-background-disabled: #1E1E1E;
+$input-background-readonly: #252525;
+
+$mdc-theme-text-colors: (
+  light: (
+    primary: white,
+    secondary: rgba(white, 0.7),
+    sub-secondary: rgba(white, 0.7),
+    hint: rgba(white, 0.55),
+    disabled: rgba(white, 0.45),
+    icon: rgba(white, 0.45),
+    negative: $color-negative,
+  ),
+  dark: (
+    primary: rgba(white, 0.95),
+    secondary: rgba(white, 0.6),
+    sub-secondary: rgba(white, 0.6),
+    hint: rgba(white, 0.45),
+    disabled: rgba(white, 0.3),
+    icon: rgba(white, 0.5),
+    negative: $color-negative,
+  ),
+);
+
+$theme-name: 'pulsar-dark';
+
+// Import CloudBeaver theme mixins
+@import '@cloudbeaver/core-theming/src/styles/mixins';
