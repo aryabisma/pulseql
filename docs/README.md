@@ -233,6 +233,42 @@ This folder contains comprehensive analysis and documentation for integrating Pu
 
 **When to read**: For high-level understanding of the complete implementation.
 
+### 13. Security Hardening Implementation
+**File**: [13-security-hardening-implementation.md](./13-security-hardening-implementation.md)
+
+**Purpose**: Comprehensive security enhancements and hardening measures
+
+**Contents**:
+- Security features implemented
+- XSS/CSRF prevention
+- Input sanitization and validation
+- JWT token security
+- Production deployment requirements
+- OWASP Top 10 coverage
+- Security testing procedures
+- Incident response plan
+- Compliance considerations
+
+**When to read**: **Critical** for security review and production deployment.
+
+### 14. SSO Integration Guide
+**File**: [14-sso-integration-guide.md](./14-sso-integration-guide.md)
+
+**Purpose**: Complete guide for SSO integration between Pulsar and PulseQL
+
+**Contents**:
+- SSO architecture and flow diagrams
+- PulsarSSOService implementation
+- PulsarPermissionService (RBAC)
+- JWT token specification
+- Security considerations
+- Integration steps for both sides
+- Testing strategies
+- Troubleshooting guide
+- Monitoring and metrics
+
+**When to read**: Essential for implementing and maintaining SSO integration.
+
 ## Quick Start Guide
 
 ### For Project Managers
@@ -386,18 +422,22 @@ When updating these documents:
 
 ## Version History
 
+- **v1.2** (2025-12-13): Security Hardening & SSO Integration
+  - Added PulsarSSOService for JWT token handling
+  - Added PulsarPermissionService for RBAC
+  - Enhanced input sanitization and XSS prevention
+  - Added comprehensive security documentation:
+    - 13-security-hardening-implementation.md - Security measures
+    - 14-sso-integration-guide.md - SSO implementation
+  - Improved error handling and validation
+  - Token cleanup and CSRF protection
 - **v1.1** (2025-12-13): Initial Plugin Implementation
   - Created Pulsar integration plugin package
   - Implemented WorkspaceModeService for URL-based configuration
   - Implemented PulsarIntegrationBootstrap for initialization
   - Created Pulsar Light and Dark themes
   - Created workspace styling with responsive design
-  - Added implementation documentation:
-    - 09-pulsar-plugin-implementation.md - Technical implementation
-    - 10-development-progress.md - Progress tracking
-    - 11-user-guide.md - End-user documentation
-    - 12-implementation-summary.md - Complete summary
-  - Updated README with new sections
+  - Added implementation documentation (docs 09-12)
 - **v1.0** (2024-12-12): Initial comprehensive analysis
   - All 8 core documents created
   - Complete integration strategy defined
