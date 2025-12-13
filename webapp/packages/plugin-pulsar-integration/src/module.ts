@@ -11,6 +11,7 @@ import { PulsarIntegrationBootstrap } from './PulsarIntegrationBootstrap.js';
 import { WorkspaceModeService } from './WorkspaceModeService.js';
 import { PulsarSSOService } from './PulsarSSOService.js';
 import { PulsarPermissionService } from './PulsarPermissionService.js';
+import { PulsarUICustomizer } from './PulsarUICustomizer.js';
 
 /**
  * Pulsar Integration Plugin Module
@@ -19,6 +20,7 @@ import { PulsarPermissionService } from './PulsarPermissionService.js';
  * - URL parameter-based mode switching
  * - SSO authentication with JWT tokens
  * - Permission-based access control (RBAC)
+ * - UI customization and component visibility control
  * - Custom branding and theming
  * - Read-only connection mode
  * - Embedded workspace support
@@ -31,6 +33,7 @@ export default ModuleRegistry.add({
     serviceCollection.addSingleton(WorkspaceModeService);
     serviceCollection.addSingleton(PulsarSSOService);
     serviceCollection.addSingleton(PulsarPermissionService);
+    serviceCollection.addSingleton(PulsarUICustomizer);
     
     // Register bootstrap to initialize on app start
     serviceCollection.addSingleton(Bootstrap, PulsarIntegrationBootstrap);

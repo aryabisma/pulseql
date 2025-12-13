@@ -10,5 +10,7 @@ export * from './WorkspaceModeService.js';
 export * from './PulsarIntegrationBootstrap.js';
 export * from './PulsarSSOService.js';
 export * from './PulsarPermissionService.js';
+export * from './PulsarUICustomizer.js';
+export * from './components/index.js';
 export { default } from './module.js';
 
