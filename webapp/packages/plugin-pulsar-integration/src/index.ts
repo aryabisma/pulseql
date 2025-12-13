@@ -11,6 +11,10 @@ export * from './PulsarIntegrationBootstrap.js';
 export * from './PulsarSSOService.js';
 export * from './PulsarPermissionService.js';
 export * from './PulsarUICustomizer.js';
+export * from './QueryHistoryService.js';
+export * from './DeepLinkingService.js';
+export * from './KeyboardShortcutsService.js';
+export * from './ActivityTrackingService.js';
 export * from './components/index.js';
 export { default } from './module.js';
 

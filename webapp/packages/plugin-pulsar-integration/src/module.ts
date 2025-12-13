@@ -12,6 +12,10 @@ import { WorkspaceModeService } from './WorkspaceModeService.js';
 import { PulsarSSOService } from './PulsarSSOService.js';
 import { PulsarPermissionService } from './PulsarPermissionService.js';
 import { PulsarUICustomizer } from './PulsarUICustomizer.js';
+import { QueryHistoryService } from './QueryHistoryService.js';
+import { DeepLinkingService } from './DeepLinkingService.js';
+import { KeyboardShortcutsService } from './KeyboardShortcutsService.js';
+import { ActivityTrackingService } from './ActivityTrackingService.js';
 
 /**
  * Pulsar Integration Plugin Module
@@ -24,6 +28,10 @@ import { PulsarUICustomizer } from './PulsarUICustomizer.js';
  * - Custom branding and theming
  * - Read-only connection mode
  * - Embedded workspace support
+ * - Query history and favorites (Quick Win)
+ * - Deep linking from Pulsar (Quick Win)
+ * - Keyboard shortcuts (Quick Win)
+ * - Activity tracking (Quick Win)
  */
 export default ModuleRegistry.add({
   name: '@cloudbeaver/plugin-pulsar-integration',
@@ -34,6 +42,12 @@ export default ModuleRegistry.add({
     serviceCollection.addSingleton(PulsarSSOService);
     serviceCollection.addSingleton(PulsarPermissionService);
     serviceCollection.addSingleton(PulsarUICustomizer);
+    
+    // Register Quick Wins services
+    serviceCollection.addSingleton(QueryHistoryService);
+    serviceCollection.addSingleton(DeepLinkingService);
+    serviceCollection.addSingleton(KeyboardShortcutsService);
+    serviceCollection.addSingleton(ActivityTrackingService);
     
     // Register bootstrap to initialize on app start
     serviceCollection.addSingleton(Bootstrap, PulsarIntegrationBootstrap);

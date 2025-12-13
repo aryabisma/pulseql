@@ -9,3 +9,7 @@
 export { BackToPulsarButton } from './BackToPulsarButton.js';
 export { SSOErrorNotification } from './SSOErrorNotification.js';
 export { PulsarWorkspaceHeader } from './PulsarWorkspaceHeader.js';
+export { QueryHistoryPanel } from './QueryHistoryPanel.js';
+export { QueryFavoritesPanel } from './QueryFavoritesPanel.js';
+export { KeyboardShortcutsPanel } from './KeyboardShortcutsPanel.js';
+export { IdleSessionWarning } from './IdleSessionWarning.js';
