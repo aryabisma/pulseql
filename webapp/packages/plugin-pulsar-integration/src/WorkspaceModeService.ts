@@ -28,6 +28,22 @@ export interface WorkspaceModeConfig {
   };
 }
 
+// Whitelist of navigation items that can be safely hidden
+const HIDEABLE_NAV_ITEMS = [
+  'admin',
+  'settings',
+  'connections',
+  'users',
+  'server',
+  'drivers',
+  'projects',
+  'administration',
+  'server-settings',
+  'user-management',
+  'driver-management',
+  'server-config',
+];
+
 /**
  * Service to manage workspace mode configuration from URL parameters
  * Supports Pulsar integration, embedded mode, and standalone mode
@@ -81,10 +97,22 @@ export class WorkspaceModeService {
   initializeFromURL(): void {
     const params = new URLSearchParams(window.location.search);
 
+    const hideNavItems = params.get('hide_nav')?.split(',').map(s => s.trim()) || [];
+    const validHideNavItems = hideNavItems.filter(item => HIDEABLE_NAV_ITEMS.includes(item));
+
+    // Warn about invalid nav items
+    const invalidItems = hideNavItems.filter(item => !HIDEABLE_NAV_ITEMS.includes(item));
+    if (invalidItems.length > 0) {
+      console.warn(
+        `[WorkspaceModeService] Invalid navigation items will be ignored: ${invalidItems.join(', ')}. ` +
+          `Allowed items: ${HIDEABLE_NAV_ITEMS.join(', ')}`
+      );
+    }
+
     this.config = {
       mode: (params.get('mode') as WorkspaceMode) || 'standalone',
       theme: params.get('theme') || undefined,
-      hideNavigation: params.get('hide_nav')?.split(',').map(s => s.trim()) || [],
+      hideNavigation: validHideNavItems,
       readonlyConnections: params.get('readonly_connections') === 'true',
       workspaceId: params.get('workspace_id') || undefined,
       autoConnect: params.get('auto_connect') === 'true',
@@ -101,6 +129,7 @@ export class WorkspaceModeService {
 
   /**
    * Parse custom branding from URL parameters
+   * Validates color parameter to prevent invalid CSS
    */
   private parseCustomBranding(params: URLSearchParams): WorkspaceModeConfig['customBranding'] {
     const logo = params.get('brand_logo');
@@ -112,7 +141,21 @@ export class WorkspaceModeService {
       return undefined;
     }
 
-    return { logo, title, color, returnUrl };
+    // Validate color if provided
+    let validatedColor = color;
+    if (color) {
+      // Basic hex color validation
+      const hexColorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+      if (!hexColorRegex.test(color)) {
+        console.warn(
+          `[WorkspaceModeService] Invalid color format: ${color}. ` +
+            `Expected hex format (e.g., #1976D2). Color will be ignored.`
+        );
+        validatedColor = undefined;
+      }
+    }
+
+    return { logo, title, color: validatedColor, returnUrl };
   }
 
   /**

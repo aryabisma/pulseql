@@ -43,7 +43,7 @@ export class PulsarIntegrationBootstrap extends Bootstrap {
     }
   }
 
-  private applyCustomBranding(branding: any): void {
+  private applyCustomBranding(branding: NonNullable<WorkspaceModeConfig['customBranding']>): void {
     if (branding.title) {
       // Update page title
       document.title = branding.title;
