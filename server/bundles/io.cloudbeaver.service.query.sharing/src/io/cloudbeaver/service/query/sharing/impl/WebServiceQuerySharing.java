@@ -42,6 +42,10 @@ import java.util.UUID;
 public class WebServiceQuerySharing implements DBWServiceQuerySharing {
 
     private static final Log log = Log.getLog(WebServiceQuerySharing.class);
+    
+    // Constants for boolean database values
+    private static final String BOOLEAN_TRUE = "Y";
+    private static final String BOOLEAN_FALSE = "N";
 
     @NotNull
     @Override
@@ -366,7 +370,7 @@ public class WebServiceQuerySharing implements DBWServiceQuerySharing {
             stmt.setTimestamp(9, java.sql.Timestamp.valueOf(query.getUpdatedAt()));
             stmt.setString(10, query.getVisibility().name());
             stmt.setString(11, query.getTeamId());
-            stmt.setString(12, query.isTemplate() ? "Y" : "N");
+            stmt.setString(12, query.isTemplate() ? BOOLEAN_TRUE : BOOLEAN_FALSE);
             stmt.executeUpdate();
         }
     }
@@ -426,7 +430,7 @@ public class WebServiceQuerySharing implements DBWServiceQuerySharing {
         query.setUpdatedAt(rs.getTimestamp("UPDATED_AT").toLocalDateTime());
         query.setVisibility(QueryVisibility.valueOf(rs.getString("VISIBILITY")));
         query.setTeamId(rs.getString("TEAM_ID"));
-        query.setTemplate("Y".equals(rs.getString("IS_TEMPLATE")));
+        query.setTemplate(BOOLEAN_TRUE.equals(rs.getString("IS_TEMPLATE")));
         return query;
     }
     
@@ -472,7 +476,7 @@ public class WebServiceQuerySharing implements DBWServiceQuerySharing {
                 stmt.setString(paramIndex++, filter.getVisibility().name());
             }
             if (filter.getIsTemplate() != null) {
-                stmt.setString(paramIndex++, filter.getIsTemplate() ? "Y" : "N");
+                stmt.setString(paramIndex++, filter.getIsTemplate() ? BOOLEAN_TRUE : BOOLEAN_FALSE);
             }
             if (filter.getSearchText() != null) {
                 String searchPattern = "%" + filter.getSearchText() + "%";
