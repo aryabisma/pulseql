@@ -231,16 +231,35 @@ public class IdleSessionManager {
     ) {
         // Structured audit logging for monitoring systems
         if (log.isInfoEnabled()) {
+            // Escape all values to prevent JSON injection
+            String escapedSessionId = escapeJsonValue(sessionId);
+            String escapedUserId = escapeJsonValue(userId != null ? userId : "unknown");
+            String escapedEventType = escapeJsonValue(eventType);
+            String escapedMessage = escapeJsonValue(message);
+            
             log.info(String.format(
                 "{\"timestamp\":\"%s\",\"event_type\":\"%s\",\"session_id\":\"%s\"," +
                 "\"user_id\":\"%s\",\"message\":\"%s\"}",
                 new java.util.Date(),
-                eventType,
-                sessionId,
-                userId != null ? userId : "unknown",
-                message.replace("\"", "\\\"")
+                escapedEventType,
+                escapedSessionId,
+                escapedUserId,
+                escapedMessage
             ));
         }
+    }
+    
+    /**
+     * Escape JSON value to prevent injection
+     */
+    @NotNull
+    private String escapeJsonValue(@NotNull String value) {
+        return value
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t");
     }
     
     /**

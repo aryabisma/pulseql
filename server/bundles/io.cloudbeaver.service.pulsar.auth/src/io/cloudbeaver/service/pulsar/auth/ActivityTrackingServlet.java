@@ -204,9 +204,14 @@ public class ActivityTrackingServlet extends DBWServiceBindingServlet {
     
     /**
      * Extract object value from JSON
+     * 
+     * NOTE: This is a simple regex-based parser suitable for basic JSON structures.
+     * For production use with complex nested objects, consider using Jackson or Gson.
      */
     @NotNull
     private String extractJsonObject(@NotNull String json, @NotNull String key) {
+        // Simple pattern that works for non-nested objects
+        // Will not work correctly for nested objects or complex structures
         Pattern pattern = Pattern.compile("\"" + key + "\"\\s*:\\s*(\\{[^}]*\\})");
         Matcher matcher = pattern.matcher(json);
         
@@ -310,7 +315,7 @@ public class ActivityTrackingServlet extends DBWServiceBindingServlet {
      * Escape JSON string
      */
     @NotNull
-    private String escapeJson(@NotNull String str) {
+    private String escapeJson(@Nullable String str) {
         if (str == null) {
             return "";
         }

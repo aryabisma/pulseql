@@ -89,7 +89,7 @@ public class SessionValidationService {
             SessionValidationResult.Builder resultBuilder = SessionValidationResult.builder()
                 .sessionValid(true)
                 .lastActivityTime(currentTime)
-                .idleTimeMs(0); // Reset idle time
+                .idleTimeMs(idleTime); // Set actual idle time
             
             // Check if we should send a warning
             if (idleTime > warningThresholdMs && !activity.warningSent) {
@@ -188,6 +188,12 @@ public class SessionValidationService {
     
     /**
      * Update session activity timestamp
+     * 
+     * NOTE: This method performs a database write on every activity validation.
+     * For high-traffic scenarios, consider implementing:
+     * - Write-through caching with periodic batch updates
+     * - Async write queue to reduce blocking
+     * - Conditional updates (only write if timestamp changed significantly)
      */
     private void updateSessionActivity(
         @NotNull String sessionId,

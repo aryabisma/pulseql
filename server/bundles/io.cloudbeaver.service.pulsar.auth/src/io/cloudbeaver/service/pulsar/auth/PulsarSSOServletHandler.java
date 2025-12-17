@@ -24,6 +24,9 @@ import java.io.IOException;
  * Pulsar SSO Servlet Handler
  * 
  * Handles routing for Pulsar SSO and Activity Tracking endpoints
+ * 
+ * NOTE: For production use, consider implementing singleton pattern or dependency injection
+ * to ensure all components share the same SessionValidationService instance for consistency.
  */
 public class PulsarSSOServletHandler extends AbstractActionServletHandler {
     
