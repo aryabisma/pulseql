@@ -11,14 +11,15 @@ import io.cloudbeaver.DBWebException;
 import io.cloudbeaver.model.session.WebSession;
 import io.cloudbeaver.model.user.WebUser;
 import io.cloudbeaver.server.CBApplication;
-import io.cloudbeaver.service.DBWServiceBindingServlet;
+import io.cloudbeaver.server.graphql.GraphQLLoggerUtil;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.utils.CommonUtils;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -28,7 +29,7 @@ import java.io.PrintWriter;
  * Provides REST API for SSO token validation
  * Endpoint: /api/sso/validate
  */
-public class PulsarSSOServlet extends DBWServiceBindingServlet {
+public class PulsarSSOServlet extends HttpServlet {
     
     private static final Log log = Log.getLog(PulsarSSOServlet.class);
     
@@ -87,7 +88,7 @@ public class PulsarSSOServlet extends DBWServiceBindingServlet {
         
         try {
             // Get session
-            WebSession session = getWebSession(request);
+            WebSession session = GraphQLLoggerUtil.getWebSession(request);
             if (session == null) {
                 sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "No session found");
                 return;
@@ -134,7 +135,7 @@ public class PulsarSSOServlet extends DBWServiceBindingServlet {
             throws IOException {
         
         try {
-            WebSession session = getWebSession(request);
+            WebSession session = GraphQLLoggerUtil.getWebSession(request);
             if (session != null) {
                 authHandler.logout(session);
                 session.close();

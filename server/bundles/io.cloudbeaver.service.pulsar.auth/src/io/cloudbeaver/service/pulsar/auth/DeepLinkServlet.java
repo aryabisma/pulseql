@@ -8,13 +8,14 @@
 package io.cloudbeaver.service.pulsar.auth;
 
 import io.cloudbeaver.model.session.WebSession;
-import io.cloudbeaver.service.DBWServiceBindingServlet;
+import io.cloudbeaver.server.graphql.GraphQLLoggerUtil;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.utils.CommonUtils;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -25,7 +26,7 @@ import java.io.PrintWriter;
  * REST endpoint for generating deep links to PulseQL
  * Endpoint: /api/pulseql/generate-link
  */
-public class DeepLinkServlet extends DBWServiceBindingServlet {
+public class DeepLinkServlet extends HttpServlet {
     
     private static final Log log = Log.getLog(DeepLinkServlet.class);
     
@@ -51,7 +52,7 @@ public class DeepLinkServlet extends DBWServiceBindingServlet {
         
         try {
             // Get session
-            WebSession session = getWebSession(request);
+            WebSession session = GraphQLLoggerUtil.getWebSession(request);
             if (session == null) {
                 sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "No session found");
                 return;
@@ -89,10 +90,8 @@ public class DeepLinkServlet extends DBWServiceBindingServlet {
     @Override
     protected void doOptions(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // Support CORS preflight requests
-        response.setHeader("Access-Control-Allow-Origin", "*");
-        response.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-        response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        // CORS is handled by the application server configuration
+        // We don't set headers here for security reasons
         response.setStatus(HttpServletResponse.SC_OK);
     }
     
@@ -160,10 +159,15 @@ public class DeepLinkServlet extends DBWServiceBindingServlet {
             
             // Find closing quote, handling escaped quotes
             int endQuote = startQuote + 1;
+            boolean escaped = false;
             while (endQuote < json.length()) {
                 char c = json.charAt(endQuote);
-                if (c == '"' && json.charAt(endQuote - 1) != '\\') {
+                if (c == '\\' && !escaped) {
+                    escaped = true;
+                } else if (c == '"' && !escaped) {
                     break;
+                } else {
+                    escaped = false;
                 }
                 endQuote++;
             }
