@@ -1,0 +1,192 @@
+# Query Sharing GraphQL Schema
+
+enum QueryVisibility {
+    PRIVATE
+    TEAM
+    PUBLIC
+}
+
+enum QueryPermissionType {
+    VIEW
+    EDIT
+    EXECUTE
+    DELETE
+}
+
+enum QueryExecutionStatus {
+    SUCCESS
+    ERROR
+    CANCELLED
+}
+
+type SharedQuery {
+    queryId: ID!
+    name: String!
+    description: String
+    sqlQuery: String!
+    connectionId: String
+    schemaName: String
+    createdBy: String!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+    visibility: QueryVisibility!
+    teamId: String
+    isTemplate: Boolean!
+    tags: [String!]
+    metadata: Object
+}
+
+type QueryPermission {
+    permissionId: ID!
+    queryId: ID!
+    userId: String
+    teamId: String
+    permission: QueryPermissionType!
+    grantedBy: String!
+    grantedAt: DateTime!
+}
+
+type QueryComment {
+    commentId: ID!
+    queryId: ID!
+    userId: String!
+    commentText: String!
+    parentId: String
+    createdAt: DateTime!
+    updatedAt: DateTime!
+    isDeleted: Boolean!
+}
+
+type QueryVersion {
+    versionId: ID!
+    queryId: ID!
+    versionNumber: Int!
+    sqlQuery: String!
+    changedBy: String!
+    changeDescription: String
+    createdAt: DateTime!
+}
+
+type QueryFavorite {
+    favoriteId: ID!
+    queryId: ID!
+    userId: String!
+    createdAt: DateTime!
+}
+
+type QueryExecution {
+    executionId: ID!
+    queryId: ID!
+    userId: String!
+    executionTimeMs: Long
+    rowCount: Int
+    status: QueryExecutionStatus!
+    errorMessage: String
+    executedAt: DateTime!
+}
+
+input SharedQueryInput {
+    name: String!
+    description: String
+    sqlQuery: String!
+    connectionId: String
+    schemaName: String
+    visibility: QueryVisibility!
+    teamId: String
+    isTemplate: Boolean
+    tags: [String!]
+    metadata: Object
+}
+
+input QueryFilterInput {
+    createdBy: String
+    teamId: String
+    visibility: QueryVisibility
+    isTemplate: Boolean
+    searchText: String
+    tags: [String!]
+    limit: Int
+    offset: Int
+    sortBy: String
+    sortOrder: String
+}
+
+input QueryPermissionInput {
+    userId: String
+    teamId: String
+    permission: QueryPermissionType!
+}
+
+input QueryCommentInput {
+    commentText: String!
+    parentId: String
+}
+
+type QueryList {
+    queries: [SharedQuery!]!
+    totalCount: Int!
+}
+
+extend type Query {
+    # List shared queries with filters
+    listSharedQueries(filter: QueryFilterInput): QueryList!
+    
+    # Get a specific shared query
+    getSharedQuery(queryId: ID!): SharedQuery
+    
+    # Get query permissions
+    getQueryPermissions(queryId: ID!): [QueryPermission!]!
+    
+    # Get query comments
+    getQueryComments(queryId: ID!): [QueryComment!]!
+    
+    # Get query versions
+    getQueryVersions(queryId: ID!): [QueryVersion!]!
+    
+    # Get user's favorite queries
+    getUserFavoriteQueries: [SharedQuery!]!
+    
+    # Get query execution history
+    getQueryExecutions(queryId: ID!): [QueryExecution!]!
+}
+
+extend type Mutation {
+    # Create a shared query
+    createSharedQuery(input: SharedQueryInput!): SharedQuery!
+    
+    # Update a shared query
+    updateSharedQuery(queryId: ID!, input: SharedQueryInput!): SharedQuery!
+    
+    # Delete a shared query
+    deleteSharedQuery(queryId: ID!): Boolean!
+    
+    # Fork/copy a query
+    forkSharedQuery(queryId: ID!, newName: String!): SharedQuery!
+    
+    # Grant permission to a query
+    grantQueryPermission(queryId: ID!, permission: QueryPermissionInput!): QueryPermission!
+    
+    # Revoke query permission
+    revokeQueryPermission(permissionId: ID!): Boolean!
+    
+    # Add comment to query
+    addQueryComment(queryId: ID!, comment: QueryCommentInput!): QueryComment!
+    
+    # Update comment
+    updateQueryComment(commentId: ID!, commentText: String!): QueryComment!
+    
+    # Delete comment
+    deleteQueryComment(commentId: ID!): Boolean!
+    
+    # Restore a previous version
+    restoreQueryVersion(queryId: ID!, versionNumber: Int!): SharedQuery!
+    
+    # Add query to favorites
+    addQueryToFavorites(queryId: ID!): QueryFavorite!
+    
+    # Remove query from favorites
+    removeQueryFromFavorites(queryId: ID!): Boolean!
+    
+    # Record query execution
+    recordQueryExecution(queryId: ID!, executionTimeMs: Long, rowCount: Int, status: QueryExecutionStatus!, errorMessage: String): QueryExecution!
+}
