@@ -13,3 +13,4 @@ export { QueryHistoryPanel } from './QueryHistoryPanel.js';
 export { QueryFavoritesPanel } from './QueryFavoritesPanel.js';
 export { KeyboardShortcutsPanel } from './KeyboardShortcutsPanel.js';
 export { IdleSessionWarning } from './IdleSessionWarning.js';
+export { DeepLinkButton } from './DeepLinkButton.js';
