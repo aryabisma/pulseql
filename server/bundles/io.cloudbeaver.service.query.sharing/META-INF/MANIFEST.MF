@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Vendor: DBeaver Corp
+Bundle-Name: Cloudbeaver Web Service - Query Sharing
+Bundle-SymbolicName: io.cloudbeaver.service.query.sharing;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Release-Date: 20251217
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Bundle-ActivationPolicy: lazy
+Require-Bundle: io.cloudbeaver.server.ce,
+ io.cloudbeaver.service.security,
+ org.jkiss.dbeaver.registry
+Automatic-Module-Name: io.cloudbeaver.service.query.sharing
+Export-Package: io.cloudbeaver.service.query.sharing,
+ io.cloudbeaver.service.query.sharing.model,
+ io.cloudbeaver.service.query.sharing.dto

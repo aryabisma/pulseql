@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+
+<plugin>
+
+    <extension point="io.cloudbeaver.service">
+        <service id="query-sharing" label="Query Sharing" description="Query sharing and collaboration services" class="io.cloudbeaver.service.query.sharing.WebServiceBindingQuerySharing">
+            <permission id="query.create" label="Create Shared Query" category="query" scope="subject" description="Allows creating shared queries"/>
+            <permission id="query.edit" label="Edit Shared Query" category="query" scope="object" description="Allows editing shared queries"/>
+            <permission id="query.delete" label="Delete Shared Query" category="query" scope="object" description="Allows deleting shared queries"/>
+            <permission id="query.view" label="View Shared Query" category="query" scope="object" description="Allows viewing shared queries"/>
+            <permission id="query.execute" label="Execute Shared Query" category="query" scope="object" description="Allows executing shared queries"/>
+            <permission id="query.comment" label="Comment on Query" category="query" scope="object" description="Allows commenting on queries"/>
+            <permission id="query.share" label="Share Query" category="query" scope="object" description="Allows sharing queries with others"/>
+        </service>
+    </extension>
+
+</plugin>
