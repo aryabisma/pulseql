@@ -1166,9 +1166,11 @@ public class WebServiceQuerySharing implements DBWServiceQuerySharing {
     
     private boolean isUserInTeam(Connection connection, String userId, String teamId) throws SQLException {
         // Check if user is a member of the specified team
-        // This uses CloudBeaver's team membership structure
-        String sql = "SELECT COUNT(*) FROM CB_AUTH_PERMISSIONS WHERE SUBJECT_ID = ? " +
-            "AND PERMISSION_ID LIKE ? || '%'";
+        // This queries the team membership by checking if a user has any permissions
+        // associated with the team (teams are stored as subjects in CloudBeaver)
+        String sql = "SELECT COUNT(*) FROM CB_USER usr " +
+            "JOIN CB_USER_TEAM ut ON usr.USER_ID = ut.USER_ID " +
+            "WHERE usr.USER_ID = ? AND ut.TEAM_ID = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, userId);
             stmt.setString(2, teamId);
