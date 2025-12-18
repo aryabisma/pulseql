@@ -1107,6 +1107,13 @@ public class WebServiceQuerySharing implements DBWServiceQuerySharing {
             return true;
         }
         
+        // Team visibility - check if user is in the same team
+        if (query.getVisibility() == QueryVisibility.TEAM && query.getTeamId() != null) {
+            if (isUserInTeam(connection, userId, query.getTeamId())) {
+                return true;
+            }
+        }
+        
         // Check explicit permissions
         String sql = "SELECT COUNT(*) FROM CB_QUERY_PERMISSIONS WHERE QUERY_ID = ? AND " +
             "(USER_ID = ? OR TEAM_ID IN (SELECT TEAM_ID FROM CB_AUTH_SUBJECT WHERE SUBJECT_ID = ?)) " +
@@ -1155,5 +1162,22 @@ public class WebServiceQuerySharing implements DBWServiceQuerySharing {
             }
         }
         return null;
+    }
+    
+    private boolean isUserInTeam(Connection connection, String userId, String teamId) throws SQLException {
+        // Check if user is a member of the specified team
+        // This uses CloudBeaver's team membership structure
+        String sql = "SELECT COUNT(*) FROM CB_AUTH_PERMISSIONS WHERE SUBJECT_ID = ? " +
+            "AND PERMISSION_ID LIKE ? || '%'";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, userId);
+            stmt.setString(2, teamId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        }
+        return false;
     }
 }
