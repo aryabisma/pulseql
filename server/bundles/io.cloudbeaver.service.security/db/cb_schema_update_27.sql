@@ -1,0 +1,46 @@
+-- Activity Events Table for Pulsar Activity Tracking
+CREATE TABLE {table_prefix}CB_ACTIVITY_EVENTS
+(
+    EVENT_ID        CHAR(36)     NOT NULL,
+    SESSION_ID      VARCHAR(128) NOT NULL,
+    USER_ID         VARCHAR(128) NULL,
+    EVENT_TYPE      VARCHAR(50)  NOT NULL,
+    EVENT_TIMESTAMP BIGINT       NOT NULL,
+    DETAILS         VARCHAR(4096),
+    IP_ADDRESS      VARCHAR(45)  NULL,
+    USER_AGENT      VARCHAR(512) NULL,
+    CREATE_TIME     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+    PRIMARY KEY (EVENT_ID)
+);
+
+-- Index for session lookup
+CREATE INDEX {table_prefix}CB_ACTIVITY_EVENTS_SESSION_IDX ON {table_prefix}CB_ACTIVITY_EVENTS(SESSION_ID);
+
+-- Index for user lookup
+CREATE INDEX {table_prefix}CB_ACTIVITY_EVENTS_USER_IDX ON {table_prefix}CB_ACTIVITY_EVENTS(USER_ID);
+
+-- Index for timestamp queries (for cleanup and analytics)
+CREATE INDEX {table_prefix}CB_ACTIVITY_EVENTS_TIMESTAMP_IDX ON {table_prefix}CB_ACTIVITY_EVENTS(EVENT_TIMESTAMP);
+
+-- Index for event type queries
+CREATE INDEX {table_prefix}CB_ACTIVITY_EVENTS_TYPE_IDX ON {table_prefix}CB_ACTIVITY_EVENTS(EVENT_TYPE);
+
+-- Session Activity Tracking Table
+CREATE TABLE {table_prefix}CB_SESSION_ACTIVITY
+(
+    SESSION_ID         VARCHAR(128) NOT NULL,
+    USER_ID            VARCHAR(128) NULL,
+    LAST_ACTIVITY_TIME BIGINT       NOT NULL,
+    WARNING_SENT       CHAR(1)      DEFAULT 'N' NOT NULL,
+    CREATE_TIME        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    UPDATE_TIME        TIMESTAMP    NOT NULL,
+
+    PRIMARY KEY (SESSION_ID)
+);
+
+-- Index for cleanup queries
+CREATE INDEX {table_prefix}CB_SESSION_ACTIVITY_LAST_ACTIVITY_IDX ON {table_prefix}CB_SESSION_ACTIVITY(LAST_ACTIVITY_TIME);
+
+-- Index for warning management
+CREATE INDEX {table_prefix}CB_SESSION_ACTIVITY_WARNING_IDX ON {table_prefix}CB_SESSION_ACTIVITY(WARNING_SENT, LAST_ACTIVITY_TIME);

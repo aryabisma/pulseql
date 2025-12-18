@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+
+<plugin>
+
+    <!-- Pulsar SSO Servlet Handler -->
+    <extension point="io.cloudbeaver.handler">
+        <servletHandler id="PulsarSSOServletHandler" class="io.cloudbeaver.service.pulsar.auth.PulsarSSOServletHandler"/>
+    </extension>
+
+</plugin>

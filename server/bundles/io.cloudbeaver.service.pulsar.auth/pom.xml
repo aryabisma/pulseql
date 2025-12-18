@@ -62,6 +62,13 @@
             <groupId>org.jkiss.dbeaver</groupId>
             <artifactId>org.jkiss.utils</artifactId>
         </dependency>
+        
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     
     <build>
