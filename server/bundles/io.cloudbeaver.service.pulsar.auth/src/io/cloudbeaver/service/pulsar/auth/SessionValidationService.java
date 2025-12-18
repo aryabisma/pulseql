@@ -49,13 +49,33 @@ public class SessionValidationService {
         String warningConfig = application.getAppConfiguration()
             .getConfigurationValue("pulsar.activity.warning-minutes");
         
-        this.idleTimeoutMs = CommonUtils.isEmpty(idleTimeoutConfig) 
-            ? DEFAULT_IDLE_TIMEOUT_MS 
-            : Long.parseLong(idleTimeoutConfig) * 60 * 1000;
-            
-        this.warningThresholdMs = CommonUtils.isEmpty(warningConfig) 
-            ? DEFAULT_WARNING_THRESHOLD_MS 
-            : Long.parseLong(warningConfig) * 60 * 1000;
+        if (CommonUtils.isEmpty(idleTimeoutConfig)) {
+            this.idleTimeoutMs = DEFAULT_IDLE_TIMEOUT_MS;
+        } else {
+            long idleTimeoutMinutes;
+            try {
+                idleTimeoutMinutes = Long.parseLong(idleTimeoutConfig);
+            } catch (NumberFormatException e) {
+                log.error("Invalid value for 'pulsar.activity.idle-timeout-minutes': '" + idleTimeoutConfig
+                    + "'. Using default idle timeout " + (DEFAULT_IDLE_TIMEOUT_MS / 60000) + " minutes.", e);
+                idleTimeoutMinutes = DEFAULT_IDLE_TIMEOUT_MS / (60 * 1000);
+            }
+            this.idleTimeoutMs = idleTimeoutMinutes * 60 * 1000;
+        }
+
+        if (CommonUtils.isEmpty(warningConfig)) {
+            this.warningThresholdMs = DEFAULT_WARNING_THRESHOLD_MS;
+        } else {
+            long warningMinutes;
+            try {
+                warningMinutes = Long.parseLong(warningConfig);
+            } catch (NumberFormatException e) {
+                log.error("Invalid value for 'pulsar.activity.warning-minutes': '" + warningConfig
+                    + "'. Using default warning threshold " + (DEFAULT_WARNING_THRESHOLD_MS / 60000) + " minutes.", e);
+                warningMinutes = DEFAULT_WARNING_THRESHOLD_MS / (60 * 1000);
+            }
+            this.warningThresholdMs = warningMinutes * 60 * 1000;
+        }
             
         log.info("SessionValidationService initialized. Idle timeout: " + (idleTimeoutMs / 60000) + " minutes");
     }
@@ -215,11 +235,11 @@ public class SessionValidationService {
             }
         }
         
-        // Update cache
-        SessionActivity activity = sessionCache.get(sessionId);
-        if (activity != null) {
-            activity.lastActivityTime = timestamp;
-        }
+        // Update cache with thread-safe operation
+        sessionCache.computeIfPresent(sessionId, (key, activity) -> {
+            activity.setLastActivityTime(timestamp);
+            return activity;
+        });
     }
     
     /**
@@ -240,11 +260,11 @@ public class SessionValidationService {
             }
         }
         
-        // Update cache
-        SessionActivity activity = sessionCache.get(sessionId);
-        if (activity != null) {
-            activity.warningSent = sent;
-        }
+        // Update cache with thread-safe operation
+        sessionCache.computeIfPresent(sessionId, (key, activity) -> {
+            activity.setWarningSent(sent);
+            return activity;
+        });
     }
     
     /**
@@ -352,13 +372,13 @@ public class SessionValidationService {
     }
     
     /**
-     * Session activity data structure
+     * Session activity data structure with thread-safe mutable fields
      */
     public static class SessionActivity {
         public final String sessionId;
         public final String userId;
-        public long lastActivityTime;
-        public boolean warningSent;
+        private volatile long lastActivityTime;
+        private volatile boolean warningSent;
         
         public SessionActivity(
             @NotNull String sessionId,
@@ -382,12 +402,20 @@ public class SessionValidationService {
             return userId;
         }
         
-        public long getLastActivityTime() {
+        public synchronized long getLastActivityTime() {
             return lastActivityTime;
         }
         
-        public boolean isWarningSent() {
+        public synchronized void setLastActivityTime(long lastActivityTime) {
+            this.lastActivityTime = lastActivityTime;
+        }
+        
+        public synchronized boolean isWarningSent() {
             return warningSent;
+        }
+        
+        public synchronized void setWarningSent(boolean warningSent) {
+            this.warningSent = warningSent;
         }
     }
 }

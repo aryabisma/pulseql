@@ -37,6 +37,7 @@ public class PulsarSSOServletHandler extends AbstractActionServletHandler {
     private PulsarSSOServlet ssoServlet;
     private ActivityTrackingServlet activityServlet;
     private IdleSessionManager idleSessionManager;
+    private boolean initialized = false;
     
     public PulsarSSOServletHandler() {
         try {
@@ -51,10 +52,13 @@ public class PulsarSSOServletHandler extends AbstractActionServletHandler {
             idleSessionManager = new IdleSessionManager(validationService);
             idleSessionManager.start();
             
+            initialized = true;
             log.info("PulsarSSOServletHandler initialized successfully");
             
         } catch (Exception e) {
             log.error("Failed to initialize PulsarSSOServletHandler", e);
+            // Re-throw to prevent partial initialization
+            throw new RuntimeException("PulsarSSOServletHandler initialization failed", e);
         }
     }
     
@@ -64,6 +68,13 @@ public class PulsarSSOServletHandler extends AbstractActionServletHandler {
         @NotNull HttpServletRequest request,
         @NotNull HttpServletResponse response
     ) throws DBException, IOException {
+        
+        // Check if handler is properly initialized
+        if (!initialized) {
+            log.error("PulsarSSOServletHandler not properly initialized");
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Service not available");
+            return true;
+        }
         
         String servletPath = ServletAppUtils.removeSideSlashes(request.getServletPath());
         

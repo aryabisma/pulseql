@@ -158,9 +158,15 @@ public class ActivityTrackingServlet extends DBWServiceBindingServlet {
         }
         
         String timestampStr = extractJsonNumber(eventJson, "timestamp");
-        req.timestamp = CommonUtils.isEmpty(timestampStr) 
-            ? System.currentTimeMillis() 
-            : Long.parseLong(timestampStr);
+        if (CommonUtils.isEmpty(timestampStr)) {
+            req.timestamp = System.currentTimeMillis();
+        } else {
+            try {
+                req.timestamp = Long.parseLong(timestampStr);
+            } catch (NumberFormatException e) {
+                throw new DBWebException("Invalid event timestamp: " + timestampStr, e);
+            }
+        }
         
         // Optional fields
         req.userId = extractJsonString(body, "user_id");
@@ -223,16 +229,78 @@ public class ActivityTrackingServlet extends DBWServiceBindingServlet {
     }
     
     /**
-     * Unescape JSON string
+     * Unescape JSON string with comprehensive escape sequence handling
      */
     @NotNull
     private String unescapeJson(@NotNull String str) {
-        return str
-            .replace("\\\"", "\"")
-            .replace("\\\\", "\\")
-            .replace("\\n", "\n")
-            .replace("\\r", "\r")
-            .replace("\\t", "\t");
+        StringBuilder sb = new StringBuilder(str.length());
+        int i = 0;
+        int len = str.length();
+        while (i < len) {
+            char c = str.charAt(i++);
+            if (c == '\\' && i < len) {
+                char esc = str.charAt(i++);
+                switch (esc) {
+                    case '"':
+                        sb.append('\"');
+                        break;
+                    case '\\':
+                        sb.append('\\');
+                        break;
+                    case '/':
+                        sb.append('/');
+                        break;
+                    case 'b':
+                        sb.append('\b');
+                        break;
+                    case 'f':
+                        sb.append('\f');
+                        break;
+                    case 'n':
+                        sb.append('\n');
+                        break;
+                    case 'r':
+                        sb.append('\r');
+                        break;
+                    case 't':
+                        sb.append('\t');
+                        break;
+                    case 'u':
+                        if (i + 4 <= len) {
+                            int codePoint = 0;
+                            for (int j = 0; j < 4; j++) {
+                                char h = str.charAt(i + j);
+                                int digit = Character.digit(h, 16);
+                                if (digit == -1) {
+                                    // Invalid hex digit; append literally
+                                    sb.append('\\').append('u');
+                                    sb.append(str, i, i + 4);
+                                    codePoint = -1;
+                                    break;
+                                }
+                                codePoint = (codePoint << 4) + digit;
+                            }
+                            if (codePoint >= 0) {
+                                sb.append((char) codePoint);
+                            }
+                            i += 4;
+                        } else {
+                            // Truncated unicode escape, append literally
+                            sb.append('\\').append('u');
+                            sb.append(str.substring(i));
+                            i = len;
+                        }
+                        break;
+                    default:
+                        // Unknown escape sequence, keep as-is
+                        sb.append('\\').append(esc);
+                        break;
+                }
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
     
     /**
@@ -324,7 +392,8 @@ public class ActivityTrackingServlet extends DBWServiceBindingServlet {
             .replace("\"", "\\\"")
             .replace("\n", "\\n")
             .replace("\r", "\\r")
-            .replace("\t", "\\t");
+            .replace("\t", "\\t")
+            .replace("/", "\\/");
     }
     
     /**

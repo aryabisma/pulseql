@@ -54,17 +54,47 @@ public class IdleSessionManager {
         String intervalConfig = app.getAppConfiguration()
             .getConfigurationValue("pulsar.activity.cleanup-interval-seconds");
         
-        this.idleTimeoutMs = CommonUtils.isEmpty(idleTimeoutConfig) 
-            ? DEFAULT_IDLE_TIMEOUT_MS 
-            : Long.parseLong(idleTimeoutConfig) * 60 * 1000;
+        if (CommonUtils.isEmpty(idleTimeoutConfig)) {
+            this.idleTimeoutMs = DEFAULT_IDLE_TIMEOUT_MS;
+        } else {
+            long idleTimeoutMinutes;
+            try {
+                idleTimeoutMinutes = Long.parseLong(idleTimeoutConfig);
+            } catch (NumberFormatException e) {
+                log.error("Invalid value for 'pulsar.activity.idle-timeout-minutes': '" + idleTimeoutConfig
+                    + "'. Using default idle timeout " + (DEFAULT_IDLE_TIMEOUT_MS / 60000) + " minutes.", e);
+                idleTimeoutMinutes = DEFAULT_IDLE_TIMEOUT_MS / (60 * 1000);
+            }
+            this.idleTimeoutMs = idleTimeoutMinutes * 60 * 1000;
+        }
             
-        this.warningThresholdMs = CommonUtils.isEmpty(warningConfig) 
-            ? DEFAULT_WARNING_THRESHOLD_MS 
-            : Long.parseLong(warningConfig) * 60 * 1000;
+        if (CommonUtils.isEmpty(warningConfig)) {
+            this.warningThresholdMs = DEFAULT_WARNING_THRESHOLD_MS;
+        } else {
+            long warningMinutes;
+            try {
+                warningMinutes = Long.parseLong(warningConfig);
+            } catch (NumberFormatException e) {
+                log.error("Invalid value for 'pulsar.activity.warning-minutes': '" + warningConfig
+                    + "'. Using default warning threshold " + (DEFAULT_WARNING_THRESHOLD_MS / 60000) + " minutes.", e);
+                warningMinutes = DEFAULT_WARNING_THRESHOLD_MS / (60 * 1000);
+            }
+            this.warningThresholdMs = warningMinutes * 60 * 1000;
+        }
             
-        this.checkIntervalMs = CommonUtils.isEmpty(intervalConfig) 
-            ? DEFAULT_CHECK_INTERVAL_MS 
-            : Long.parseLong(intervalConfig) * 1000;
+        if (CommonUtils.isEmpty(intervalConfig)) {
+            this.checkIntervalMs = DEFAULT_CHECK_INTERVAL_MS;
+        } else {
+            long intervalSeconds;
+            try {
+                intervalSeconds = Long.parseLong(intervalConfig);
+            } catch (NumberFormatException e) {
+                log.error("Invalid value for 'pulsar.activity.cleanup-interval-seconds': '" + intervalConfig
+                    + "'. Using default cleanup interval " + (DEFAULT_CHECK_INTERVAL_MS / 1000) + " seconds.", e);
+                intervalSeconds = DEFAULT_CHECK_INTERVAL_MS / 1000;
+            }
+            this.checkIntervalMs = intervalSeconds * 1000;
+        }
         
         // Create scheduler with daemon thread
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -259,7 +289,8 @@ public class IdleSessionManager {
             .replace("\"", "\\\"")
             .replace("\n", "\\n")
             .replace("\r", "\\r")
-            .replace("\t", "\\t");
+            .replace("\t", "\\t")
+            .replace("/", "\\/");
     }
     
     /**
