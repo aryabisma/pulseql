@@ -9,9 +9,44 @@ import { observer } from 'mobx-react-lite';
 import { useCallback, useState } from 'react';
 import { Button } from '@cloudbeaver/core-blocks';
 import { useService } from '@cloudbeaver/core-di';
-import { CommonDialogService } from '@cloudbeaver/core-dialogs';
 import { NotificationService } from '@cloudbeaver/core-events';
 import { DeepLinkingService, type DeepLinkTarget } from '../DeepLinkingService.js';
+
+interface ValidationFields {
+  connectionId?: string;
+  schemaName?: string;
+  tableName?: string;
+  query?: string;
+}
+
+function validateRequiredFields(
+  targetType: 'table' | 'schema' | 'query' | 'connection',
+  fields: ValidationFields
+): string | null {
+  switch (targetType) {
+    case 'table':
+      if (!fields.connectionId || !fields.schemaName || !fields.tableName) {
+        return 'Connection ID, schema name, and table name are required for table links';
+      }
+      break;
+    case 'schema':
+      if (!fields.connectionId || !fields.schemaName) {
+        return 'Connection ID and schema name are required for schema links';
+      }
+      break;
+    case 'query':
+      if (!fields.query) {
+        return 'Query is required for query links';
+      }
+      break;
+    case 'connection':
+      if (!fields.connectionId) {
+        return 'Connection ID is required for connection links';
+      }
+      break;
+  }
+  return null;
+}
 
 interface DeepLinkButtonProps {
   targetType: 'table' | 'schema' | 'query' | 'connection';
@@ -53,35 +88,12 @@ export const DeepLinkButton = observer<DeepLinkButtonProps>(function DeepLinkBut
         query,
       };
 
-      // Validate required fields
-      if (targetType === 'table' && (!connectionId || !schemaName || !tableName)) {
+      // Validate required fields based on target type
+      const validationError = validateRequiredFields(targetType, { connectionId, schemaName, tableName, query });
+      if (validationError) {
         notificationService.logError({
           title: 'Invalid Parameters',
-          message: 'Connection ID, schema name, and table name are required for table links',
-        });
-        return;
-      }
-
-      if (targetType === 'schema' && (!connectionId || !schemaName)) {
-        notificationService.logError({
-          title: 'Invalid Parameters',
-          message: 'Connection ID and schema name are required for schema links',
-        });
-        return;
-      }
-
-      if (targetType === 'query' && !query) {
-        notificationService.logError({
-          title: 'Invalid Parameters',
-          message: 'Query is required for query links',
-        });
-        return;
-      }
-
-      if (targetType === 'connection' && !connectionId) {
-        notificationService.logError({
-          title: 'Invalid Parameters',
-          message: 'Connection ID is required for connection links',
+          message: validationError,
         });
         return;
       }

@@ -7,7 +7,10 @@
  */
 package io.cloudbeaver.service.pulsar.auth;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import io.cloudbeaver.model.session.WebSession;
+import io.cloudbeaver.model.user.WebUser;
 import io.cloudbeaver.server.graphql.GraphQLLoggerUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -31,6 +34,7 @@ public class DeepLinkServlet extends HttpServlet {
     private static final Log log = Log.getLog(DeepLinkServlet.class);
     
     private DeepLinkService deepLinkService;
+    private Gson gson;
     
     @Override
     public void init() throws ServletException {
@@ -38,6 +42,7 @@ public class DeepLinkServlet extends HttpServlet {
         
         try {
             deepLinkService = new DeepLinkService();
+            gson = new Gson();
             log.info("Deep Link service initialized successfully");
             
         } catch (Exception e) {
@@ -59,7 +64,8 @@ public class DeepLinkServlet extends HttpServlet {
             }
             
             // Verify user is authenticated
-            if (session.getUser() == null) {
+            WebUser user = session.getUser();
+            if (user == null) {
                 sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "User not authenticated");
                 return;
             }
@@ -77,13 +83,17 @@ public class DeepLinkServlet extends HttpServlet {
             // Send response
             sendJsonResponse(response, deepLinkResponse);
             
-            log.info("Deep link generated for user: " + session.getUser().getUserId() + 
-                ", type: " + deepLinkRequest.getTargetType());
+            // Log success with null-safe user ID retrieval
+            String userId = user.getUserId();
+            if (userId != null) {
+                log.info("Deep link generated for user: " + userId + ", type: " + deepLinkRequest.getTargetType());
+            }
             
         } catch (Exception e) {
             log.error("Error generating deep link", e);
+            // Use generic error message for client, detailed error is logged
             sendErrorResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-                "Failed to generate deep link: " + e.getMessage());
+                "An error occurred while generating the deep link");
         }
     }
     
@@ -96,106 +106,19 @@ public class DeepLinkServlet extends HttpServlet {
     }
     
     /**
-     * Parse JSON request body into DeepLinkRequest
+     * Parse JSON request body into DeepLinkRequest using Gson
      */
     private DeepLinkRequest parseRequest(HttpServletRequest request) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        BufferedReader reader = request.getReader();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            sb.append(line);
-        }
-        
-        String body = sb.toString().trim();
-        
-        // Validate basic JSON structure
-        if (!body.startsWith("{") || !body.endsWith("}")) {
-            log.warn("Invalid JSON structure in request body");
-            return null;
-        }
-        
-        try {
-            DeepLinkRequest req = new DeepLinkRequest();
-            
-            // Parse JSON manually (simple approach for security)
-            req.setTargetType(extractJsonString(body, "target_type"));
-            req.setConnectionId(extractJsonString(body, "connection_id"));
-            req.setSchemaName(extractJsonString(body, "schema_name"));
-            req.setTableName(extractJsonString(body, "table_name"));
-            req.setQuery(extractJsonString(body, "query"));
-            req.setWorkspaceId(extractJsonString(body, "workspace_id"));
-            
-            return req;
-            
-        } catch (Exception e) {
-            log.warn("Failed to parse request body", e);
+        try (BufferedReader reader = request.getReader()) {
+            return gson.fromJson(reader, DeepLinkRequest.class);
+        } catch (JsonSyntaxException e) {
+            log.warn("Invalid JSON in request body", e);
             return null;
         }
     }
     
     /**
-     * Extract string value from JSON
-     */
-    private String extractJsonString(String json, String fieldName) {
-        try {
-            // Find field name in quotes
-            String searchPattern = "\"" + fieldName + "\"";
-            int fieldIndex = json.indexOf(searchPattern);
-            if (fieldIndex == -1) {
-                return null;
-            }
-            
-            // Find colon after field name
-            int colonIndex = json.indexOf(":", fieldIndex);
-            if (colonIndex == -1) {
-                return null;
-            }
-            
-            // Skip whitespace and find opening quote
-            int startQuote = json.indexOf("\"", colonIndex);
-            if (startQuote == -1) {
-                return null;
-            }
-            
-            // Find closing quote, handling escaped quotes
-            int endQuote = startQuote + 1;
-            boolean escaped = false;
-            while (endQuote < json.length()) {
-                char c = json.charAt(endQuote);
-                if (c == '\\' && !escaped) {
-                    escaped = true;
-                } else if (c == '"' && !escaped) {
-                    break;
-                } else {
-                    escaped = false;
-                }
-                endQuote++;
-            }
-            
-            if (endQuote >= json.length()) {
-                return null;
-            }
-            
-            // Extract value
-            String value = json.substring(startQuote + 1, endQuote);
-            
-            // Unescape common escape sequences
-            value = value.replace("\\\"", "\"")
-                        .replace("\\\\", "\\")
-                        .replace("\\n", "\n")
-                        .replace("\\r", "\r")
-                        .replace("\\t", "\t");
-            
-            return value;
-            
-        } catch (Exception e) {
-            log.debug("Failed to extract field: " + fieldName, e);
-            return null;
-        }
-    }
-    
-    /**
-     * Send JSON response
+     * Send JSON response using Gson
      */
     private void sendJsonResponse(HttpServletResponse response, DeepLinkResponse deepLinkResponse) 
             throws IOException {
@@ -209,25 +132,13 @@ public class DeepLinkServlet extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
         
-        PrintWriter writer = response.getWriter();
-        writer.write("{");
-        writer.write("\"success\":" + deepLinkResponse.isSuccess());
-        
-        if (deepLinkResponse.isSuccess()) {
-            writer.write(",\"deep_link\":\"" + escapeJson(deepLinkResponse.getDeepLink()) + "\"");
-            if (!CommonUtils.isEmpty(deepLinkResponse.getShortUrl())) {
-                writer.write(",\"short_url\":\"" + escapeJson(deepLinkResponse.getShortUrl()) + "\"");
-            }
-        } else {
-            writer.write(",\"error\":\"" + escapeJson(deepLinkResponse.getError()) + "\"");
+        try (PrintWriter writer = response.getWriter()) {
+            gson.toJson(deepLinkResponse, writer);
         }
-        
-        writer.write("}");
-        writer.flush();
     }
     
     /**
-     * Send error response
+     * Send error response using Gson
      */
     private void sendErrorResponse(HttpServletResponse response, int status, String message) 
             throws IOException {
@@ -236,28 +147,10 @@ public class DeepLinkServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setStatus(status);
         
-        PrintWriter writer = response.getWriter();
-        writer.write("{");
-        writer.write("\"success\":false,");
-        writer.write("\"error\":\"" + escapeJson(message) + "\"");
-        writer.write("}");
-        writer.flush();
-    }
-    
-    /**
-     * Escape JSON string
-     */
-    private String escapeJson(String str) {
-        if (str == null) {
-            return "";
+        DeepLinkResponse errorResponse = DeepLinkResponse.error(message);
+        
+        try (PrintWriter writer = response.getWriter()) {
+            gson.toJson(errorResponse, writer);
         }
-        return str
-            .replace("\\", "\\\\")
-            .replace("\"", "\\\"")
-            .replace("\n", "\\n")
-            .replace("\r", "\\r")
-            .replace("\t", "\\t")
-            .replace("\b", "\\b")
-            .replace("\f", "\\f");
     }
 }

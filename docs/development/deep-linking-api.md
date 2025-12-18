@@ -54,11 +54,15 @@ POST /api/pulseql/generate-link
 
 ### Examples
 
+**Note**: These endpoints require a valid user session. The curl examples below will fail without proper session authentication. In a browser context, the session cookie is automatically included. For API testing, you would need to first authenticate and include the session cookie in your request.
+
 #### Generate Table Link
 
 ```bash
+# This example requires a valid session cookie
 curl -X POST https://pulsar.example.com/api/pulseql/generate-link \
   -H "Content-Type: application/json" \
+  -b "session_cookie=your_session_id" \
   -d '{
     "target_type": "table",
     "connection_id": "postgres-prod",
@@ -70,8 +74,10 @@ curl -X POST https://pulsar.example.com/api/pulseql/generate-link \
 #### Generate Query Link
 
 ```bash
+# This example requires a valid session cookie
 curl -X POST https://pulsar.example.com/api/pulseql/generate-link \
   -H "Content-Type: application/json" \
+  -b "session_cookie=your_session_id" \
   -d '{
     "target_type": "query",
     "query": "SELECT * FROM users WHERE status = '\''active'\''"

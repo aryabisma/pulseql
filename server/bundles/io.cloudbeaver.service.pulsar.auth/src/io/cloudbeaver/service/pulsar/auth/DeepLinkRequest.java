@@ -27,12 +27,12 @@ public class DeepLinkRequest {
     public DeepLinkRequest() {
     }
     
-    @NotNull
+    @Nullable
     public String getTargetType() {
         return targetType;
     }
     
-    public void setTargetType(@NotNull String targetType) {
+    public void setTargetType(@Nullable String targetType) {
         this.targetType = targetType;
     }
     
@@ -89,6 +89,7 @@ public class DeepLinkRequest {
             ", schemaName='" + schemaName + '\'' +
             ", tableName='" + tableName + '\'' +
             ", workspaceId='" + workspaceId + '\'' +
+            ", query=[REDACTED]" +
             '}';
     }
 }

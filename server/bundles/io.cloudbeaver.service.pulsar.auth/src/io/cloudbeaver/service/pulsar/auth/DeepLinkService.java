@@ -16,7 +16,6 @@ import org.jkiss.dbeaver.DBException;
 import org.jkiss.dbeaver.Log;
 import org.jkiss.utils.CommonUtils;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -253,6 +252,9 @@ public class DeepLinkService {
     
     /**
      * Validate identifier (connection ID, schema name, table name, etc.)
+     * 
+     * Note: These are basic defense-in-depth checks. The receiving PulseQL application
+     * must perform its own validation as these identifiers are URL-encoded during transmission.
      */
     private void validateIdentifier(@NotNull String identifier, @NotNull String fieldName) throws DBException {
         if (CommonUtils.isEmpty(identifier)) {
@@ -263,7 +265,8 @@ public class DeepLinkService {
             throw new DBException(fieldName + " exceeds maximum length of " + MAX_IDENTIFIER_LENGTH);
         }
         
-        // Check for SQL injection attempts and XSS
+        // Basic defense-in-depth checks for common attack patterns
+        // Note: These checks may have false positives. URL encoding provides primary protection.
         String lower = identifier.toLowerCase();
         if (lower.contains("<script") || lower.contains("javascript:") ||
             lower.contains("' or ") || lower.contains("\" or ") ||
@@ -274,6 +277,9 @@ public class DeepLinkService {
     
     /**
      * Validate SQL query
+     * 
+     * Note: Query is Base64-encoded before URL transmission, which prevents XSS.
+     * The receiving PulseQL application is responsible for validating query content.
      */
     private void validateQuery(@NotNull String query) throws DBException {
         if (CommonUtils.isEmpty(query)) {
@@ -283,12 +289,6 @@ public class DeepLinkService {
         if (query.length() > MAX_QUERY_LENGTH) {
             throw new DBException("Query exceeds maximum length of " + MAX_QUERY_LENGTH);
         }
-        
-        // Check for XSS attempts
-        String lower = query.toLowerCase();
-        if (lower.contains("<script") || lower.contains("javascript:")) {
-            throw new DBException("Invalid query content");
-        }
     }
     
     /**
@@ -296,12 +296,6 @@ public class DeepLinkService {
      */
     @NotNull
     private String urlEncode(@NotNull String value) {
-        try {
-            return URLEncoder.encode(value, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            // This should never happen with UTF-8
-            log.error("Failed to URL encode value", e);
-            return value;
-        }
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 }
