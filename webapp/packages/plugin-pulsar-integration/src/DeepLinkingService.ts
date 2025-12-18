@@ -24,6 +24,13 @@ export interface DeepLinkParams {
   filter?: string; // Pre-applied filter
 }
 
+export interface GenerateLinkResponse {
+  success: boolean;
+  deep_link?: string;
+  short_url?: string;
+  error?: string;
+}
+
 const DEEP_LINK_PARAM = 'pulsar_link';
 
 @injectable()
@@ -248,6 +255,75 @@ export class DeepLinkingService {
     } catch (error) {
       console.error('Failed to copy deep link to clipboard:', error);
       return false;
+    }
+  }
+
+  /**
+   * Generate deep link via backend API
+   * This calls the Pulsar backend to generate a deep link with proper validation
+   */
+  async generateDeepLinkViaAPI(target: DeepLinkTarget): Promise<GenerateLinkResponse> {
+    try {
+      const response = await fetch('/api/pulseql/generate-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          target_type: target.type,
+          connection_id: target.connectionId,
+          schema_name: target.schemaName,
+          table_name: target.tableName,
+          query: target.query,
+          workspace_id: target.workspaceId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        return {
+          success: false,
+          error: errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+        };
+      }
+
+      const data: GenerateLinkResponse = await response.json();
+      return data;
+
+    } catch (error) {
+      console.error('Failed to generate deep link via API:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to generate deep link',
+      };
+    }
+  }
+
+  /**
+   * Generate and copy deep link via backend API
+   */
+  async generateAndCopyLink(target: DeepLinkTarget): Promise<{ success: boolean; error?: string }> {
+    try {
+      const response = await this.generateDeepLinkViaAPI(target);
+      
+      if (!response.success || !response.deep_link) {
+        return {
+          success: false,
+          error: response.error || 'Failed to generate link',
+        };
+      }
+
+      // Copy to clipboard
+      await navigator.clipboard.writeText(response.deep_link);
+      
+      return { success: true };
+
+    } catch (error) {
+      console.error('Failed to generate and copy link:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to copy link',
+      };
     }
   }
 }
